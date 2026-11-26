@@ -51,7 +51,7 @@ Optional settings via `pbjs.setConfig({ ringier: { ... } })`:
 | `clientBidders` | Bidders the publisher calls client-side on the page. The Bidlayer does not call them a second time server-side. | `string[]`           |
 | `configVersion` | Version of the publisher setup the page was built with.                                                         | `string` or `number` |
 | `pvId`          | Page view ID of the publisher. Defaults to the page view ID that Prebid.js assigns to this bidder.              | `string`             |
-| `sendEvents`    | `false` switches off the event pixels (win, render, timeout, error). Default: `true`.                           | `boolean`            |
+| `sendEvents`    | `true` switches on the event pixels (win, render, timeout, error). Default: `false`.                            | `boolean`            |
 | `endpoint`      | Overrides the auction endpoint for testing. Only https URLs on `ringier-advertising.ch` are accepted.           | `string`             |
 
 ```javascript
@@ -81,7 +81,7 @@ The following blocking parameters are passed on to the bidders of the Bidlayer: 
 
 ## User Sync
 
-With iframe syncs allowed, the adapter registers one iframe from the Bidlayer domain. It syncs the bidders configured for the publisher. No sync takes place without TCF purpose 1 consent.
+With iframe syncs allowed, the adapter registers one iframe from the Bidlayer domain. Prebid Server then syncs the bidders configured for the publisher. When GDPR applies, no sync takes place without TCF purpose 1 consent.
 
 ```javascript
 pbjs.setConfig({
@@ -95,5 +95,7 @@ pbjs.setConfig({
 
 ## Disclosures
 
-- The adapter records win, render, timeout and error events with a keepalive request to the Bidlayer domain. Publishers can switch them off with `setConfig({ ringier: { sendEvents: false } })`.
-- Requests are gzip-compressed and sent with credentials.
+- Events: the adapter can record win, render, timeout and error events with a keepalive request to the Bidlayer domain. They are off by default; `setConfig({ ringier: { sendEvents: true } })` switches them on. The requests carry the cookies of the Bidlayer domain.
+- Billing: billing URLs (`burl`) are handed to Prebid.js as impression trackers and fire when the bid wins. They do not depend on `sendEvents`. The adapter has no `onBidBillable` handler, so for ad units with `deferBilling` the creative shows only after `pbjs.triggerBilling()`.
+- Video: bids are answered with VAST XML, so an instream ad unit needs a configured cache, for example `pbjs.setConfig({ cache: { useLocal: true } })`.
+- Requests are gzip-compressed where the browser supports it and sent with credentials.
